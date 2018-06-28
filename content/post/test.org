@@ -1,0 +1,86 @@
+#+TITLE: Test
+#+SLUG: org-mode-blogging
+#+DATE: 2018-06-27
+#+CATEGORIES: emacs org-mode
+#+TAGS: emacs org-mode
+#+SUMMARY: Testing easy org-mode blogging with Hugo.
+#+DRAFT: false
+
+* Overview
+
+This is a test of Eric Kaschalk's [[http://www.modernemacs.com/post/org-mode-blogging/][Emacs Blogging Workflow]] to see if
+everything is working properly.
+
+** Formatting Test
+
+*** sql
+
+#+BEGIN_SRC sql
+select 
+    '--' as summary_date,
+    coalesce(nullif(ibr.name,''), '(Unrated Calls)') as ib_region_name, 
+    sum(total_calls) as total_calls,
+    sum(completed_calls) as completed_calls,
+    sum(raw_total_seconds) / 60 as raw_total_minutes,
+    sum(ib_total_seconds) / 60 as ib_total_minutes 
+#+END_SRC 
+
+*** perl
+
+#+BEGIN_SRC perl
+    debug("SQL = $sql");
+    my $results = $conn->selectall_arrayref($sql,{ Slice => {} });
+    my %r;
+    for my $row (@$results) {
+        if (!defined $r{$row->{source}}->{$row->{source_currency}}->{$row->{dest_currency}}) {
+            $r{$row->{source}}->{$row->{source_currency}}->{$row->{dest_currency}};
+        }
+        push @{$r{$row->{source}}->{$row->{source_currency}}->{$row->{dest_currency}}}, $row;
+    }
+
+    my %t;
+    for my $source (sort keys %r) {
+        for my $source_currency (sort keys %{$r{$source}}) {
+            for my $dest_currency (sort keys %{$r{$source}{$source_currency}}) {
+                my $tree = Set::IntervalTree->new();
+                for my $row (@{$r{$source}{$source_currency}{$dest_currency}}) {
+                    $tree->insert($row, $row->{start_date}, $row->{end_date});
+                }
+                $t{$source}{$source_currency}{$dest_currency} = $tree;
+            }
+        }
+    }
+#+END_SRC
+
+*** elisp
+
+#+BEGIN_SRC lisp
+(load-theme 'tomorrow-night-blue t)
+;; Toggle between the two themes I like
+(defvar toggle-current-theme "blue")
+(defun toggle-theme ()
+  (interactive)
+  (if (string= toggle-current-theme "blue")
+      (progn
+	(load-theme 'tomorrow-night-eighties t)
+	(setq toggle-current-theme "eighties"))
+    (load-theme 'tomorrow-night-blue t)
+    (setq toggle-current-theme "blue")))
+#+END_SRC
+
+
+*** Bash
+
+#+BEGIN_SRC bash
+#!/bin/bash
+export SRCHOST=`cat /etc/local_pg_sid`
+export TMPFILE=${SRCHOST}.tmp.txt
+for e in ldata summary cdr_data cdr_mindx mdata ; do 
+  for d in  `psql postgresql://user:password@${SRCHOST}/dbname --tuples-only -A -c  "SELECT
+    c.relname FROM pg_class c JOIN pg_tablespace t ON c.reltablespace =
+    t.oid WHERE t.spcname = '$e' and relname not like 'pg_toast%' and relname not like 'st_%'
+    order by relname;"` ;  do 
+check_postgres.pl --action=bloat -u user --dbpass=password -db dbname --include $d >> ${TMPFILE} ;
+done ; done
+grep CRITICAL ${TMPFILE}|sed 's/|.*//'| sed "s/\*/\n/g"| sed 's/.*\?(db webcdr)\(.*\?\)rows:.*\? \(wasted [a-z]\+:[0-9]\+ ([0-9]\+ ..)\).*/\1 : \2/g' 
+#+END_SRC

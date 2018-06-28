@@ -1,0 +1,12 @@
+#+TITLE: Using pg_partman to Define a Two-Dimensional Partitioning Scheme in Postgres 10
+#+SLUG: 2d-pg_partman
+#+DATE: 2018-06-28
+#+CATEGORIES: postgres pg_partman pg10
+#+TAGS: postgres pg_partman pg10
+#+SUMMARY: Using pg_partman to Define a Two-Dimensional Partitioning Scheme in Postgres 10
+#+DRAFT: true
+
+
+* Overview 
+
+Partitioning in Postgres 
